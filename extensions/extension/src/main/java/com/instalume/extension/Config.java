@@ -172,7 +172,7 @@ public final class Config {
     public static int getIconSize() { return intClamped("icon_size", 100, 80, 130); }
     public static int getIconSpacing() { return intClamped("icon_spacing", 100, 80, 140); }
 
-    private static int intClamped(String key, int def, int min, int max) {
+    public static int intClamped(String key, int def, int min, int max) {
         SharedPreferences p = prefs();
         int v = p == null ? def : p.getInt(key, def);
         if (v < min) v = min;
