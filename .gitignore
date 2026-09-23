@@ -1,6 +1,8 @@
-# Build outputs
+# Build outputs and user-supplied base APKs (never commit APKs)
 *.apk
 *.apkm
+*.xapk
+*.apks
 *.idsig
 *.mpe
 *.mpp
