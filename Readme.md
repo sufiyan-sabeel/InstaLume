@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/app_icon.png" alt="InstaLume logo — original frosted-glass mark" width="128" height="128">
+  <img src="assets/social-preview.png" alt="InstaLume logo — original frosted-glass mark" width="720" height="">
   <h1>InstaLume</h1>
   <p><strong>Social, reimagined.</strong></p>
   <p>
