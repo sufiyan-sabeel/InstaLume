@@ -1,4 +1,4 @@
-rootProject.name = "feurstagram-patches"
+rootProject.name = "instalume-patches"
 
 pluginManagement {
     repositories {

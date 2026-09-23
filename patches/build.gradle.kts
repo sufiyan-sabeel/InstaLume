@@ -1,13 +1,13 @@
-group = "com.feurstagram"
+group = "com.instalume"
 
 patches {
     about {
-        name = "Feurstagram Patches"
-        description = "Distraction-free Instagram: blocks the feed, stories, explore, reels, ads and suggestions, with a runtime toggle and an optional permanent lock."
-        source = "git@github.com:jeanherail/Feurstagram.git"
-        author = "Jean Herail"
-        contact = "na"
-        website = "na"
+        name = "InstaLume Patches"
+        description = "InstaLume V1.0.0 by Umaiz Sufiyan: premium Instagram customization with Liquid Glass UI, modular features, privacy controls, backup/restore, and version-aware patching. Independent project, not affiliated with Meta/Instagram. GPLv3, based on FeurStagram (GPLv3) with Morphe/Piko attribution in NOTICE."
+        source = "https://github.com/sufiyan-sabeel/InstaLume.git"
+        author = "Umaiz Sufiyan"
+        contact = "https://github.com/sufiyan-sabeel/InstaLume/issues"
+        website = "https://github.com/sufiyan-sabeel/InstaLume"
         license = "GPLv3"
     }
 }

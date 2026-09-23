@@ -1,19 +1,28 @@
-Feurstagram
-===========
+InstaLume V1.0.0
+================
+Created by Umaiz Sufiyan.
+Independent project. Not affiliated with Meta or Instagram.
 
-Copyright (C) Feurstagram contributors.
-
+Copyright (C) InstaLume contributors.
 Licensed under the GNU General Public License v3.0 (see LICENSE).
+
+Foundation (GPLv3, preserved):
+- Feurstagram (https://github.com/jean-voila/Feurstagram)
+  Copyright (C) Feurstagram contributors. Used as the open-source
+  foundation for InstaLume V1.0.0 per GPLv3 (modification noted here
+  and in docs/MIGRATION.md, CHANGELOG.md, README).
 
 This project is built with and attributes the following GPLv3 works:
 
 - Morphe (https://morphe.software) — the patcher and Gradle tooling used to
   build and apply the patches. Per the Morphe NOTICE (GPLv3 Section 7c), the
-  "Morphe" name is used here only descriptively, for compatibility; Feurstagram
+  "Morphe" name is used here only descriptively, for compatibility; InstaLume
   is a distinct, independent project and does not imply authorship by, or
   affiliation with, the Morphe project.
 
 - Piko (https://github.com/crimera/piko) — some Instagram patch approaches
   (notably the network-blocking and clone techniques) are adapted from Piko.
 
-All other code is original to Feurstagram.
+All other InstaLume code is original to InstaLume (original logo, Glass
+system, registries, backup/restore, settings IA, docs, website).
+No Instagram/Meta logos, source code, or proprietary assets are included.

@@ -1,12 +1,31 @@
 # Changelog
 
-All notable changes to Feurstagram should be documented in this file.
+All notable changes to InstaLume are documented here. FeurStagram history below is preserved.
+
+## V1.0.0 — InstaLume by Umaiz Sufiyan
+
+### Added
+- InstaLume identity: `com.instalume`, `instalume.apk`, `instalume_prefs` (with one-time migration), updater + site repointed to `sufiyan-sabeel/InstaLume`.
+- Original glass-orb logo (`assets/instalume-logo.svg`, regenerated PNGs); no Instagram/Meta assets.
+- `BuildInfo`, `VersionCompatibility` (tested IG 446.0.0.49.77, fail-closed), `PatchRegistry` diagnostics, `FeatureRegistry` with honest Implemented/Version-dependent/Unavailable states.
+- New settings IA: Support / Mods / App / Developer / About; Ghost Mode honestly gated; Themes & UI (theme, iOS/Universal glass, opacity, blur, corners, nav styling); Backup & Restore (JSON schema v1, validate, merge modes, credential denylist); Developer diagnostics (redacted export).
+- `Glass` Liquid Glass system (API 31+ blur, fallback, reduced-motion respect).
+- Auto-update check now OFF by default; welcome card links to GitHub (no IG handle claimed).
+- Website rewritten (`docs/index.html`) with Liquid Glass styling; download resolves to latest GitHub Release APK.
+- Release workflow (`.github/workflows/release.yml`): tag-triggered bundle build + optional full APK + signed release upload.
+- Docs: `INSTALUME_ARCHITECTURE.md`, `MIGRATION.md`.
+
+### Changed
+- `NOTICE`, `Readme.md`, `build.sh` (`INSTALUME_*`, legacy fallback), patch metadata (author Umaiz Sufiyan).
+
+### Security
+- No passwords/tokens/cookies collection, logging, or proxying. Debug bridge dev-only. See `docs/SECURITY.md`.
 
 ## Unreleased
 
 Nothing yet.
 
-## v446-0-0-49-77
+## v446-0-0-49-77 (FeurStagram foundation, preserved)
 
 ### Added
 - **Follow the official account.** The first launch after installing or updating

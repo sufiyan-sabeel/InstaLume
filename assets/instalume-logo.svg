@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>InstaLume logo — original</title>
+  <desc>Original InstaLume mark: dark rounded square with frosted glass orb and lume spark. Not affiliated with Instagram/Meta.</desc>
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0E0E0E"/>
+      <stop offset="1" stop-color="#17181D"/>
+    </linearGradient>
+    <radialGradient id="orb" cx="0.44" cy="0.38" r="0.42">
+      <stop offset="0" stop-color="#F2F7FA" stop-opacity="0.96"/>
+      <stop offset="0.55" stop-color="#DCE7EE" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#DCE7EE" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="streak" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="496" height="496" rx="120" fill="url(#base)"/>
+  <rect x="8" y="8" width="496" height="496" rx="120" fill="none" stroke="#3A3A3A" stroke-opacity="0.6" stroke-width="2"/>
+  <circle cx="225" cy="200" r="155" fill="url(#orb)"/>
+  <ellipse cx="225" cy="150" rx="95" ry="34" fill="url(#streak)"/>
+  <path d="M330 300 l10 22 22 10 -22 10 -10 22 -10 -22 -22 -10 22 -10 Z" fill="#FFFFFF"/>
+</svg>

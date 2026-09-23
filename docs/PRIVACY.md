@@ -1,29 +1,9 @@
-# Privacy
+# Privacy — InstaLume V1.0.0
 
-Feurstagram is designed to remove distracting and intrusive parts of Instagram.
+InstaLume does not collect, proxy, store, or transmit Instagram usernames, passwords, session tokens, or cookies. Auth stays in Instagram's own flow.
 
-## Data collection
-
-Feurstagram itself does not collect analytics, credentials, personal data, or usage data.
-
-The GitHub Pages site does not load third-party analytics scripts.
-
-## Credentials
-
-Feurstagram does not collect, store, proxy, or transmit Instagram usernames, passwords, or session tokens.
-
-Authentication is handled by Instagram inside the app.
-
-## Network behavior
-
-Feurstagram may block or modify some Instagram app behavior depending on the active patches.
-
-Where possible, patches related to ads, telemetry, or network behavior should be documented. The README documents the current blocked network paths.
-
-## Third parties
-
-Feurstagram is not affiliated with Instagram, Meta, Facebook, or any third party.
-
-## Recommendation
-
-If you do not want to trust a prebuilt APK, build Feurstagram yourself from source.
+- No analytics or telemetry. Update check is OFF by default.
+- Backups (`instalume-backup.json`) exclude password/token/auth/cookie/session/secret/credential/mqtt keys.
+- Diagnostics are redacted: versions + patch/feature states only, never prefs dumps or paths with private data.
+- Site loads no third-party trackers. Build from source if preferred.
+- Not affiliated with Instagram, Meta, or third parties.

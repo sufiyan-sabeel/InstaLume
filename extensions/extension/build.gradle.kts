@@ -3,5 +3,5 @@ extension {
 }
 
 android {
-    namespace = "com.feurstagram.extension"
+    namespace = "com.instalume.extension"
 }
