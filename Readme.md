@@ -8,6 +8,7 @@
     privacy controls, and a modular feature architecture.
   </p>
   <p>Creator: <strong>Umaiz Sufiyan</strong> · Version: <strong>V1.0.0</strong></p>
+  <p><img src="assets/social-preview.png" alt="InstaLume preview" width="720"></p>
 </div>
 
 <p align="center">
