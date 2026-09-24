@@ -1,17 +1,26 @@
 name: InstaLume Release
 
-# Builds on version tags (v1.0.0) + manual dispatch.
-# - Always builds + releases the patch bundle (.mpp).
-# - Builds + releases the full instalume.apk when a base Instagram APK URL is
-#   supplied (secret/variable/input) and the Morphe CLI is available.
-# - Signing keys come ONLY from GitHub Secrets. Nothing is hardcoded.
-# Required secrets (only for the full APK):
-#   INSTAGRAM_APK_URL     direct URL to a user-supplied Instagram base APK
-#   MORPHE_CLI_URL        direct URL to the morphe-cli / morphe-desktop jar
-#   INSTALUME_KEYSTORE_B64  base64 of instalume.keystore (optional but recommended)
+# Real APK pipeline. No APK, Morphe JAR, keystore, or credential is ever
+# committed or published from this repo — every private input arrives at
+# build time via Secrets/Variables/workflow inputs only.
+#
+# Triggers:
+#   - version tags (v*)      -> builds bundle + APK, publishes GitHub Release
+#   - workflow_dispatch      -> builds bundle + APK, uploads artifacts (no release)
+#
+# Required private inputs (repo Settings -> Secrets and variables -> Actions):
+#   INSTAGRAM_APK_URL       direct URL to YOUR Instagram 446.0.0.49.77 arm64-v8a base
+#                           (secret or variable; workflow input overrides both)
+#   MORPHE_CLI_URL          direct URL to the Morphe CLI jar >= 1.11
+#                           (secret or variable; from the official Morphe releases)
+# Optional signing inputs (omit only for throwaway test signatures):
+#   INSTALUME_KEYSTORE_B64  base64 of instalume.keystore
 #   INSTALUME_KEYSTORE_PASS keystore password
-#   INSTALUME_KEY_PASS      key password (optional, defaults to keystore password)
-#   INSTALUME_KEY_ALIAS     key alias (optional, defaults to "instalume")
+#   INSTALUME_KEY_PASS      key password (defaults to keystore password)
+#   INSTALUME_KEY_ALIAS     key alias (defaults to "instalume")
+#
+# If a required input is missing the APK job FAILS with a message naming the
+# exact missing secret. Nothing is faked, no download URL is invented.
 
 on:
   push:
@@ -20,19 +29,24 @@ on:
   workflow_dispatch:
     inputs:
       instagram_apk_url:
-        description: "Direct URL to a user-supplied Instagram base APK (empty = bundle-only release)"
+        description: "Direct URL to your Instagram base APK (overrides INSTAGRAM_APK_URL secret)"
+        required: false
+        default: ""
+      morphe_cli_url:
+        description: "Direct URL to the Morphe CLI jar >= 1.11 (overrides MORPHE_CLI_URL secret)"
         required: false
         default: ""
       clone:
-        description: "Also build the clone APK (alongside stock Instagram)"
+        description: "Build the clone APK alongside stock Instagram"
         required: false
-        default: "false"
+        default: "true"
 
 permissions:
   contents: write
 
 env:
   JAVA_VERSION: "21"
+  SUPPORTED_IG: "446.0.0.49.77"
 
 jobs:
   bundle:
@@ -49,9 +63,8 @@ jobs:
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME"
           ls "$ANDROID_HOME/build-tools"
-          ls "$ANDROID_HOME/platforms" | tail -3
 
-      - name: Gradle credentials (Morphe registry)
+      - name: Authenticate GitHub Packages
         run: |
           mkdir -p ~/.gradle
           printf 'gpr.user=%s\ngpr.key=%s\n' "${{ github.actor }}" "${{ secrets.GITHUB_TOKEN }}" >> ~/.gradle/gradle.properties
@@ -64,7 +77,6 @@ jobs:
           mkdir -p dist
           MPP="$(ls -t patches/build/libs/patches-*[0-9].mpp | grep -v -- '-sources\|-javadoc' | head -1)"
           cp "$MPP" dist/
-          sha256sum dist/* | tee dist/SHA256SUMS.txt
           ls -l dist
 
       - uses: actions/upload-artifact@v4
@@ -87,93 +99,129 @@ jobs:
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME"
           ls "$ANDROID_HOME/build-tools"
-          ls "$ANDROID_HOME/platforms" | tail -3
 
-      - name: Resolve base APK URL
-        id: base
-        run: |
-          URL="${{ inputs.instagram_apk_url }}"
-          [ -z "$URL" ] && URL="${{ vars.INSTAGRAM_APK_URL }}"
-          [ -z "$URL" ] && URL="${{ secrets.INSTAGRAM_APK_URL }}"
-          if [ -z "$URL" ]; then
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "No base APK URL supplied — skipping full APK (bundle-only release)."
-          else
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Gradle credentials (Morphe registry)
-        if: steps.base.outputs.available == 'true'
+      - name: Authenticate GitHub Packages
         run: |
           mkdir -p ~/.gradle
           printf 'gpr.user=%s\ngpr.key=%s\n' "${{ github.actor }}" "${{ secrets.GITHUB_TOKEN }}" >> ~/.gradle/gradle.properties
 
-      - name: Fetch Morphe CLI
-        if: steps.base.outputs.available == 'true'
+      - name: Resolve private inputs (fail if missing)
+        id: inputs
         run: |
-          mkdir -p tools
-          if ls tools/morphe-cli-*.jar tools/morphe-desktop-*.jar >/dev/null 2>&1; then
-            echo "Morphe CLI already in tools/"
-            exit 0
+          BASE="${{ inputs.instagram_apk_url }}"
+          [ -z "$BASE" ] && BASE="${{ vars.INSTAGRAM_APK_URL }}"
+          [ -z "$BASE" ] && BASE="${{ secrets.INSTAGRAM_APK_URL }}"
+          CLI="${{ inputs.morphe_cli_url }}"
+          [ -z "$CLI" ] && CLI="${{ vars.MORPHE_CLI_URL }}"
+          [ -z "$CLI" ] && CLI="${{ secrets.MORPHE_CLI_URL }}"
+          MISSING=0
+          if [ -z "$BASE" ]; then
+            echo "::error::Missing Instagram base APK. Add INSTAGRAM_APK_URL as a repository secret/variable (direct URL to YOUR Instagram ${SUPPORTED_IG} arm64-v8a APK), or pass instagram_apk_url on manual dispatch."
+            MISSING=1
           fi
-          URL="${{ secrets.MORPHE_CLI_URL }}"
-          [ -z "$URL" ] && URL="${{ vars.MORPHE_CLI_URL }}"
-          if [ -z "$URL" ]; then
-            echo "::error::MORPHE_CLI_URL secret/variable is required for the full APK. Bundle-only release continues."
+          if [ -z "$CLI" ]; then
+            echo "::error::Missing Morphe CLI jar. Add MORPHE_CLI_URL as a repository secret/variable (direct URL to the Morphe CLI jar >= 1.11 from the official Morphe releases), or pass morphe_cli_url on manual dispatch."
+            MISSING=1
+          fi
+          if [ "$MISSING" -ne 0 ]; then
+            echo "Supply both private inputs and re-run. The base APK and Morphe JAR are never committed."
             exit 1
           fi
-          curl -L --fail -o tools/morphe-cli.jar "$URL"
-          ls -l tools
+          echo "base-url=$BASE" >> "$GITHUB_OUTPUT"
+          echo "cli-url=$CLI" >> "$GITHUB_OUTPUT"
 
-      - name: Download base Instagram APK (user-supplied)
-        if: steps.base.outputs.available == 'true'
+      - name: Download base APK (private, never published)
         run: |
-          URL="${{ inputs.instagram_apk_url }}"
-          [ -z "$URL" ] && URL="${{ vars.INSTAGRAM_APK_URL }}"
-          [ -z "$URL" ] && URL="${{ secrets.INSTAGRAM_APK_URL }}"
-          curl -L --fail -o base-instagram.apk "$URL"
-          ls -lh base-instagram.apk
+          curl -L --fail -o base.apk "${{ steps.inputs.outputs.base-url }}"
+          ls -lh base.apk
 
-      - name: Fetch APKEditor (only needed for .apkm/.xapk/.apks)
-        if: steps.base.outputs.available == 'true'
+      - name: Pre-validate base APK (size, zip, package, version)
         run: |
-          case "base-instagram.apk" in
+          python3 - base.apk <<'EOF'
+          import re, sys, zipfile
+          path, ok = sys.argv[1], True
+          fail = lambda m: (print("::error::" + m), sys.exit(1))
+          with open(path, "rb") as f:
+              size = len(f.read())
+          if size < 20 * 1024 * 1024:
+              fail(f"Base APK is only {size} bytes — not a full Instagram base APK.")
+          try:
+              z = zipfile.ZipFile(path)
+          except Exception:
+              fail("Base file is not a valid APK/zip archive.")
+          names = set(z.namelist())
+          if "AndroidManifest.xml" not in names or not any(n == "classes.dex" or (n.startswith("classes") and n.endswith(".dex")) for n in names):
+              fail("Base file is not an Android app APK (missing manifest/dex).")
+          blob = z.read("AndroidManifest.xml")
+          text = blob.decode("utf-16-le", errors="ignore") + blob.decode("utf-8", errors="ignore")
+          if "com.instagram.android" not in text:
+              fail("Base APK does not declare package com.instagram.android.")
+          versions = sorted(set(re.findall(r"\d+\.\d+\.\d+\.\d+\.\d+", text)))
+          if not any(v == "446.0.0.49.77" or v.startswith("446.0.0.49.") for v in versions):
+              fail(f"Unsupported Instagram base version(s): {versions}. Required: 446.0.0.49.77.")
+          print(f"Base OK: com.instagram.android {versions}")
+          EOF
+
+      - name: Fetch Morphe CLI (private, never published)
+        run: |
+          mkdir -p tools
+          curl -L --fail -o tools/morphe-cli.jar "${{ steps.inputs.outputs.cli-url }}"
+          ls -l tools/
+
+      - name: Fetch APKEditor (split bundles only)
+        run: |
+          URL="${{ steps.inputs.outputs.base-url }}"
+          case "$URL" in
             *.apkm|*.xapk|*.apks)
               mkdir -p tools
               gh release download V1.4.9 -R REAndroid/APKEditor -p 'APKEditor-1.4.9.jar' -D tools/ ;;
-            *) echo "Single APK — no merge needed." ;;
+            *) echo "Single APK — no merge tool needed." ;;
           esac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Restore signing keystore from secrets
-        if: steps.base.outputs.available == 'true'
         run: |
           if [ -n "${{ secrets.INSTALUME_KEYSTORE_B64 }}" ]; then
             echo "${{ secrets.INSTALUME_KEYSTORE_B64 }}" | base64 -d > instalume.keystore
-            echo "Keystore restored from secrets."
+            echo "Release keystore restored from secrets."
           else
-            echo "No keystore secret — build.sh will sign with a throwaway key (testing only, updates will NOT carry over)."
+            echo "::warning::No INSTALUME_KEYSTORE_B64 secret — signing with a throwaway key (testing only, updates will NOT carry over)."
           fi
 
-      - name: Build + patch + sign instalume.apk
-        if: steps.base.outputs.available == 'true'
+      - name: Run build.sh --clone pipeline
         env:
           INSTALUME_KEYSTORE_PASS: ${{ secrets.INSTALUME_KEYSTORE_PASS }}
           INSTALUME_KEY_PASS: ${{ secrets.INSTALUME_KEY_PASS }}
           INSTALUME_KEY_ALIAS: ${{ secrets.INSTALUME_KEY_ALIAS }}
         run: |
-          [ "${{ inputs.clone }}" = "true" ] && EXTRA="--clone" || EXTRA=""
+          if [ "${{ inputs.clone }}" = "false" ]; then EXTRA=""; else EXTRA="--clone"; fi
           # shellcheck disable=SC2086
-          ./build.sh base-instagram.apk $EXTRA
+          ./build.sh base.apk $EXTRA
+
+      - name: Validate instalume.apk
+        run: |
+          [ -f instalume.apk ] || { echo "::error::instalume.apk was not produced."; exit 1; }
+          SIZE=$(wc -c < instalume.apk | tr -d ' ')
+          [ "$SIZE" -ge $((20 * 1024 * 1024)) ] || { echo "::error::instalume.apk is only $SIZE bytes."; exit 1; }
+          APKSIGNER="$(ls -t "$ANDROID_HOME"/build-tools/*/apksigner | head -1)"
+          "$APKSIGNER" verify --print-certs instalume.apk | grep -i "SHA-256" | head -1
+          python3 - build/patch-report.json <<'EOF'
+          import json, sys
+          r = json.load(open(sys.argv[1]))
+          failed = r.get("failedPatches", [])
+          print(f"applied={len(r.get('appliedPatches', []))} failed={len(failed)}")
+          if failed:
+              print("::error::Failed patches: " + ", ".join(p.get("name", "?") for p in failed))
+              sys.exit(1)
+          EOF
           mkdir -p dist
-          cp instalume.apk "dist/instalume-${GITHUB_REF_NAME:-local}.apk"
-          cp build/patch-report.json dist/ || true
-          sha256sum dist/* | tee -a dist/SHA256SUMS.txt || true
-          ls -lh dist
+          cp instalume.apk dist/
+          cp build/patch-report.json dist/
+          sha256sum dist/instalume.apk | tee dist/SHA256SUMS.txt
+          ls -lh dist/
 
       - uses: actions/upload-artifact@v4
-        if: steps.base.outputs.available == 'true'
         with:
           name: instalume-apk
           path: dist/
@@ -199,16 +247,14 @@ jobs:
             echo "Not affiliated with Meta or Instagram. GPLv3; FeurStagram foundation + Morphe/Piko attribution in NOTICE."
             echo
             echo "## Install"
-            echo "- Classic \`instalume-*.apk\` replaces Instagram; Clone installs alongside (when built)."
-            echo "- Full APKs are patched from a user-supplied Instagram base (tested: 446.0.0.49.77)."
-            echo "- Bundle-only asset (\`.mpp\`): apply locally with \`./build.sh <instagram.apk>\`."
+            echo "- \`instalume.apk\` (clone) installs alongside stock Instagram; verify the SHA256 below."
+            echo "- Patched from Instagram ${{ env.SUPPORTED_IG }} (arm64-v8a, user-supplied base)."
             echo
             echo "## Verify"
             echo '```'
-            cat dist/SHA256SUMS.txt 2>/dev/null || echo "(no checksums)"
+            cat dist/SHA256SUMS.txt
             echo '```'
           } > notes.md
-          cat notes.md
 
       - uses: softprops/action-gh-release@v2
         with:
